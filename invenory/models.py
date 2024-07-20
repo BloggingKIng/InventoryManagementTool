@@ -12,9 +12,14 @@ class Inventory(models.Model):
     def __str__(self):
         return f"{self.productName} -- {self.price}"
     
+
+class OrderItem(models.Model):
+    product = models.ForeignKey(Inventory, on_delete=models.CASCADE)
+    quantity = models.IntegerField()
+
 class Order(models.Model):
     orderId = models.CharField(primary_key=True, max_length=30, unique=True, blank=True)
-    products = models.ManyToManyField(Inventory)
+    products = models.ManyToManyField(OrderItem)
     orderDate = models.DateTimeField(auto_now_add=True)
     customerName = models.CharField(max_length=100)
     customerPhone = models.CharField(max_length=100)
@@ -25,3 +30,6 @@ class Order(models.Model):
             order_id = f"#OD{order_count+1}" if order_count+1 < 10 else f"#OD0{order_count+1}"
             self.orderId = order_id
         return super(Order, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.orderId} -- {self.customerName}"

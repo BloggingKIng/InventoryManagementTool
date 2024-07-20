@@ -2,11 +2,12 @@ from django.shortcuts import render
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Inventory, Order
+from .models import Inventory, Order, OrderItem
 from .serializers import InventorySerializer, OrderSerializer
 from rest_framework.decorators import permission_classes
-from .permissions import InventoryPermission
+from .permissions import InventoryPermission, OrderPermission
 from rest_framework import status
+import json
 # Create your views here.
 
 class InventoryView(APIView):
@@ -34,3 +35,59 @@ class InventoryView(APIView):
         inventory = Inventory.objects.filter(barcode=request.data['barcode']).first()
         inventory.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+@permission_classes([IsAuthenticated])
+def get_inventory_details(request, barcode):
+    inventory = Inventory.objects.filter(barcode=barcode).first()
+    if not inventory:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    serializer = InventorySerializer(inventory)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class OrderView(APIView):
+    permission_classes = (OrderPermission,)
+    def get(self, request):
+        orders = Order.objects.all()
+        serializer = OrderSerializer(orders, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def post(self, request):
+        customer_name = request.data['customer_name']
+        customer_phone = request.data['customer_phone']
+        product_data = request.data['order_items'] # We expect it to be a list dicts of the format produc_id: quatity 
+        product_data = json.loads(product_data)
+        order_items = []
+        for product_id, quantity in product_data.items():
+            product_id = int(product_id)
+            quantity = int(quantity)
+            product = Inventory.objects.filter(id=product_id).first()
+            if not product:
+                continue
+            order_item = OrderItem.objects.create(product=product, quantity=quantity)
+            order_item.save()
+            product.quantity -= quantity
+            product.save()
+            order_items.append(order_item)
+        
+        order = Order.objects.create(customerName=customer_name, customerPhone=customer_phone)
+        order.products.set(order_items)
+        order.save()
+        serializer = OrderSerializer(order)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+    def delete(self, request):
+        order = Order.objects.filter(orderId=request.data['orderId']).first()
+        for order_item in order.products.all():
+            order_item.product.quantity += order_item.quantity
+            order_item.product.save()
+        order.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@permission_classes([IsAuthenticated])
+def get_order_details(request, order_id):
+    order = Order.objects.filter(orderId=order_id).first()
+    if not order:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    serializer = OrderSerializer(order)
+    return Response(serializer.data)
