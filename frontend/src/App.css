@@ -4,3 +4,9 @@
   margin: 0px !important;
   width: 100%;
 }
+
+.button-container {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+}
