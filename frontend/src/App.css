@@ -10,3 +10,10 @@
   width: 100%;
   justify-content: center;
 }
+
+.page-container {
+  margin: 0px;
+  width: 100%;
+  padding: 0px;
+  max-width: 100%;
+}

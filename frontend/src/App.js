@@ -7,6 +7,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
 import { useUserContext } from './Context/UserContextProvider';
 import { useEffect } from 'react';
+import Home from './Pages/Home';
 
 function App() {
   const { setUser, setLoggedIn, setToken } = useUserContext();
@@ -40,6 +41,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path='/' element={<Home />} />
         <Route path='/login' element={<Login />} />
       </Routes>
     </BrowserRouter>

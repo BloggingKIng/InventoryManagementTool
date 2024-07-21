@@ -4,11 +4,13 @@ import { useState } from "react";
 import { useUserContext } from "../Context/UserContextProvider";
 import './login.css';
 import { toast, ToastContainer } from "react-toastify";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const navigate = useNavigate();
 
     const { setUser, setToken, setLoggedIn, token, loggedIn } = useUserContext();
 
@@ -48,15 +50,7 @@ export default function Login() {
     }
     
     if (loggedIn){
-        return (
-            <>
-                <NavigationBar active='inventory' />
-                <ToastContainer />
-                <Container>
-                    <h2 className="major-heading">You are logged in!</h2>
-                </Container>
-            </>
-        )
+        return navigate('/');
     }
 
     return (
@@ -86,5 +80,3 @@ export default function Login() {
         </>
     )
 }
-
-// Will add react router in the next session

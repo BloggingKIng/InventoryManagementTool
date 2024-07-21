@@ -15,7 +15,7 @@
 }
 
 .navbar-nav {
-    width: 30%;
+    width: 50%;
     justify-content: space-between
 }
 
@@ -24,4 +24,12 @@
     text-decoration: none;
     display: inline-block;
     padding: 5px 10px;
+}
+
+.nav-link, .nav-btn {
+    padding: 10px !important;
+}
+
+.short-nav {
+    width: 20%;
 }
