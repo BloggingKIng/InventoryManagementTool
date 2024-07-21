@@ -1,9 +1,9 @@
 import NavigationBar from "../Components/Navbar";
 import DisplayUser from "../Components/DisplayUser";
 import { Container } from "react-bootstrap";
-import './home.css';
 import { useUserContext } from "../Context/UserContextProvider";
 import { useNavigate } from "react-router-dom";
+import './assets/home.css';
 export default function Home() {{
     const {loggedIn} = useUserContext();
     const navigate = useNavigate();

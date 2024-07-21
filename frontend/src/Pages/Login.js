@@ -2,10 +2,10 @@ import { Container, Form, Button } from "react-bootstrap";
 import NavigationBar from "../Components/Navbar";
 import { useState } from "react";
 import { useUserContext } from "../Context/UserContextProvider";
-import './login.css';
 import { toast, ToastContainer } from "react-toastify";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import './assets/login.css';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -42,6 +42,7 @@ export default function Login() {
             setLoggedIn(true);
             fetchUser(response.data.auth_token);
             localStorage.setItem('token', response.data.auth_token);
+            navigate('/');
         })
         .catch((error)=> {
             toast.error('Invalid credentials');
@@ -50,7 +51,13 @@ export default function Login() {
     }
     
     if (loggedIn){
-        return navigate('/');
+       <>
+            <NavigationBar active='home' />
+            <ToastContainer />
+            <Container>
+                <h2 className="major-heading">You are already logged in!</h2>
+            </Container>
+       </>
     }
 
     return (

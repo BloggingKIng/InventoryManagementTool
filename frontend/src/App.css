@@ -17,3 +17,10 @@
   padding: 0px;
   max-width: 100%;
 }
+
+.heading {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 600;
+  font-size: 35px;
+  text-align: center;
+}

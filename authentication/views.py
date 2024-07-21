@@ -31,3 +31,9 @@ class UserView(APIView):
             user.save()
             return Response(user.data, status=status.HTTP_201_CREATED)
         return Response(user.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        email = request.data['email']
+        user = User.objects.filter(email=email).first()
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

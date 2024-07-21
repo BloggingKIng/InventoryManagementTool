@@ -8,6 +8,7 @@ import axios from 'axios';
 import { useUserContext } from './Context/UserContextProvider';
 import { useEffect } from 'react';
 import Home from './Pages/Home';
+import Users from './Pages/Users';
 
 function App() {
   const { setUser, setLoggedIn, setToken } = useUserContext();
@@ -43,6 +44,7 @@ function App() {
       <Routes>
         <Route path='/' element={<Home />} />
         <Route path='/login' element={<Login />} />
+        <Route path='/users' element={<Users />} />
       </Routes>
     </BrowserRouter>
   );

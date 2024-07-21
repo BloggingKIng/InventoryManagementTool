@@ -2,7 +2,9 @@ from rest_framework import permissions
 
 class IsManager(permissions.BasePermission):
     def has_permission(self, request, view):
-        if request.user.userType == 'Manager' or request.user.userType == 'Admin' or request.user.is_superuser:
-            return True
-        else:
-            return False
+       if request.method == 'GET':
+           return request.user.is_superuser or request.user.userType == 'manager' or request.user.userType == 'admin'
+       if request.method == 'POST':
+           return request.user.is_superuser or request.user.userType == 'admin' or request.user.userType == 'manager'
+       if request.method == 'DELETE':
+           return request.user.is_superuser or request.user.userType == 'admin' 

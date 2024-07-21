@@ -7,7 +7,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 export default function NavigationBar({active='inventory'}) {
-    const {user, loggedIn, token, setLoggedIn, setToken} = useUserContext();
+    const {user, loggedIn, token, setLoggedIn, setToken, setUser} = useUserContext();
     const navigate = useNavigate();
     const handleLogout = async() => {
         await axios.post('http://127.0.0.1:8000/auth/token/logout',null, {
@@ -20,6 +20,7 @@ export default function NavigationBar({active='inventory'}) {
             localStorage.removeItem('token');
             setLoggedIn(false);
             setToken(null);
+            setUser([]);
         })
         .catch((error)=> {
             console.log(error);

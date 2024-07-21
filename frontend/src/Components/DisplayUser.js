@@ -12,7 +12,7 @@ export default function DisplayUser() {
                 <strong>
                     Signed in as: 
                 </strong>&nbsp;&nbsp;&nbsp;
-                {user.email} <strong>({Capitalize(user.userType)})</strong>
+                {user?.email} <strong>({Capitalize(user?.userType)})</strong>
             </p>
         </Container>
     )
