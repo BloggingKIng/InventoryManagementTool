@@ -3,13 +3,17 @@ import NavigationBar from "../Components/Navbar";
 import DisplayUser from "../Components/DisplayUser";
 import { useUserContext } from "../Context/UserContextProvider";
 import { useState, useEffect } from "react";
-import axios from "axios";
 import { toast } from "react-toastify";
+import { useMediaDevices } from 'react-media-devices';
+import { useZxing } from 'react-zxing';
+import Barcode from 'react-barcode';
+import axios from "axios";
 import './assets/inventory.css';
 
 export default function Inventory (){
     const {user, loggedIn, token} = useUserContext();
     const [inventory, setInventory] = useState([]);
+    const [deviceId, setDeviceId] = useState(null);
     const [show, setShow] = useState(false);
     const [formData, setFormData] = useState({
         barcode: '',
@@ -19,6 +23,22 @@ export default function Inventory (){
         supplierName: '',
         supplierEmail: '',
     });
+
+    const getDevices = async () => {
+        try {
+            const availableDevices = await navigator.mediaDevices.enumerateDevices();
+            const availableVideoDevices = availableDevices.filter(device => device.kind === 'videoinput');
+            if (availableVideoDevices.length > 0) {
+                return availableVideoDevices;
+            }
+            toast.error('No video devices found');
+            return [];
+        } catch (error) {
+            toast.error('Error accessing media devices');
+            return [];
+        }
+    };
+
 
     const fetchInventory = async() => {
         await axios.get('http://127.0.0.1:8000/api/inventory/', {
@@ -72,11 +92,46 @@ export default function Inventory (){
         })
     }
 
+    const handleDelete = async(barcode) => {
+        await axios.delete(
+            'http://127.0.0.1:8000/api/inventory/',
+            {
+                headers: {
+                    Authorization: `Token ${token}`
+                }, 
+                data: {
+                    barcode: barcode
+                }
+            }
+        )
+        .then((response)=> {
+            toast.success('Item deleted successfully');
+            fetchInventory();
+        })
+        .catch((error)=> {
+            toast.error('Something went wrong, Could not delete item');
+        })
+    }
+
     useEffect(() => {
         if (token){
             fetchInventory();
         }
+        getDevices();
+        console.log(getDevices())
     }, [token])
+
+    const { ref } = useZxing({
+        onResult(newScan) {
+          console.log(newScan);
+        },
+        deviceId,
+        paused:false
+    });
+
+    console.log(ref)
+    
+    
 
     if (!loggedIn) {
         return (
@@ -109,6 +164,7 @@ export default function Inventory (){
                                 <th>Stock Quantity</th>
                                 <th>Supplier Name</th>
                                 <th>Supplier Contact</th>
+                                <th>Delete</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -116,12 +172,22 @@ export default function Inventory (){
                                 inventory.map((item, index) => (
                                     <tr key={index}>
                                         <td>{index + 1}</td>
-                                        <td>{item.barcode}</td>
+                                        <td>
+                                            <Barcode value={item.barcode} height={25} fontSize={20} />
+                                        </td>
                                         <td>{item.productName}</td>
                                         <td>{item.price}</td>
                                         <td>{item.quantity}</td>
                                         <td>{item.supplierName}</td>
                                         <td>{item.supplierEmail}</td>
+                                        <td>
+                                            {
+                                                userIsAuthorized() && 
+                                                <Button variant="danger" size="sm" onClick={() => handleDelete(item.barcode)}>
+                                                    Delete
+                                                </Button>
+                                            }
+                                        </td>
                                     </tr>
                                 ))
                             }
@@ -139,6 +205,7 @@ export default function Inventory (){
                             <Form.Group className="mb-3">
                                 <Form.Label>Bar Code</Form.Label>
                                 <Form.Control type="text" name="barcode" value={formData.barcode} onChange={handleFormDataChange} />
+                                <video ref={ref} style={{height: '300px', width: '300px'}} />
                             </Form.Group>
                             <Form.Group className="mb-3">
                                 <Form.Label>Item Name</Form.Label>
