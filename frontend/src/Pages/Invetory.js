@@ -22,6 +22,10 @@ export default function Inventory({devices}) {
         supplierName: '',
         supplierEmail: '',
     });
+    const [editMode, setEditMode] = useState(false);
+    const [filteredInventory, setFilteredInventory] = useState([]);
+    const [query, setQuery] = useState('');
+    const [scan, setScan] = useState(false); // I am using this to monitor the state of the 2nd barcode scan (the one to search)
 
     const fetchInventory = async () => {
         await axios.get('http://127.0.0.1:8000/api/inventory/', {
@@ -31,12 +35,13 @@ export default function Inventory({devices}) {
         })
         .then((response) => {
             setInventory(response.data);
+            setFilteredInventory(response.data);
         })
         .catch((error) => {
             toast.error('Something went wrong, Could not fetch inventory');
         })
     };
-    
+
     useEffect(() => {
 
         if (token) {
@@ -101,13 +106,79 @@ export default function Inventory({devices}) {
         paused: paused,
         onDecodeResult: (result) => {
             console.log(result);
-            setFormData({
-                ...formData,
-                barcode: result.text
-            })
+            if (!scan){
+                setFormData({
+                    ...formData,
+                    barcode: result.text
+                })}
+            else {
+                setQuery(result.text);
+            }
             setPaused(true);
         }
     });
+
+    const handleEdit = (item) => {
+        console.log(item);
+        setFormData({
+            id: item.id,
+            barcode: item.barcode,
+            productName: item.productName,
+            price: item.price,
+            quantity: item.quantity,
+            supplierName: item.supplierName,
+            supplierEmail: item.supplierEmail
+        });
+        setEditMode(true);
+        setShow(true);
+    };
+
+    const handleEditItem = async () => {
+        console.log(formData);
+        await axios.put('http://127.0.0.1:8000/api/inventory/', formData, {
+            headers: {
+                Authorization: `Token ${token}`
+            }
+        })
+        .then((response) => {
+            toast.success('Item edited successfully');
+            setShow(false);
+            setEditMode(false);
+            setFormData({
+                barcode: '',
+                productName: '',
+                price: 0,
+                quantity: '',
+                supplierName: '',
+                supplierEmail: '',
+            });
+            fetchInventory();
+        })
+        .catch((error) => {
+            toast.error('Something went wrong, Could not edit item');
+        })
+    }
+    
+    const scanBarcode = async () => {
+        setScan(true);
+        setPaused(false);
+    };
+
+    useEffect(() => {
+        console.log(query);
+        if (query) {
+            let newFilteredInventory = inventory.filter((item) => (
+                item.productName.toLowerCase().includes(query.toLowerCase()) ||
+                item.barcode.toLowerCase().includes(query.toLowerCase()) ||
+                item.supplierName.toLowerCase().includes(query.toLowerCase())
+            ));
+            setFilteredInventory(newFilteredInventory);
+            console.log(newFilteredInventory);
+        }
+       else {
+           setFilteredInventory(inventory);
+       }
+    }, [query]);
 
     if (!loggedIn) {
         return (
@@ -129,6 +200,26 @@ export default function Inventory({devices}) {
                         <Button variant="warning" className="btn-add" size="md" onClick={() => setShow(true)}>Add Item</Button>
                     </Container>
                 )}
+                <Container className="search-container">
+                    <Form.Control type="text" placeholder="Search Inventory" value={query} onChange={(e) => setQuery(e.target.value)} />
+                    {/* <Button variant="success" className="btn-add" size="md" disabled>Search</Button> */}
+                    <Button variant="primary" size="md" className="btn-add" onClick={scanBarcode}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" className="bi bi-upc-scan" viewBox="0 0 16 16">
+                            <path d="M1.5 1a.5.5 0 0 0-.5.5v3a.5.5 0 0 1-1 0v-3A1.5 1.5 0 0 1 1.5 0h3a.5.5 0 0 1 0 1zM11 .5a.5.5 0 0 1 .5-.5h3A1.5 1.5 0 0 1 16 1.5v3a.5.5 0 0 1-1 0v-3a.5.5 0 0 0-.5-.5h-3a.5.5 0 0 1-.5-.5M.5 11a.5.5 0 0 1 .5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 1 0 1h-3A1.5 1.5 0 0 1 0 14.5v-3a.5.5 0 0 1 .5-.5m15 0a.5.5 0 0 1 .5.5v3a1.5 1.5 0 0 1-1.5 1.5h-3a.5.5 0 0 1 0-1h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 1 .5-.5M3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0z"/>
+                        </svg>
+                    </Button>
+                </Container>
+                {scan && 
+                    <Container className="video-container">
+                        <video ref={ref} style={{width:'300px'}} />
+                        <Container className="button-container">
+                            <Button onClick={() => {
+                                setScan(false);
+                                setPaused(true);
+                            }}>Stop Scanning</Button>
+                        </Container>
+                    </Container>
+                }
                 <Container className="inventory-table-container">
                     <Table responsive hover striped bordered>
                         <thead>
@@ -136,15 +227,16 @@ export default function Inventory({devices}) {
                                 <th>#</th>
                                 <th>Bar Code</th>
                                 <th>Item Name</th>
-                                <th>Price</th>
+                                <th>Price (PKR)</th>
                                 <th>Stock Quantity</th>
                                 <th>Supplier Name</th>
                                 <th>Supplier Contact</th>
-                                <th>Delete</th>
+                                {userIsAuthorized() && <th>Delete</th>}
+                                {userIsAuthorized() && <th>Edit</th>}
                             </tr>
                         </thead>
                         <tbody>
-                            {inventory.map((item, index) => (
+                            {filteredInventory.map((item, index) => (
                                 <tr key={index}>
                                     <td>{index + 1}</td>
                                     <td>
@@ -155,13 +247,21 @@ export default function Inventory({devices}) {
                                     <td>{item.quantity}</td>
                                     <td>{item.supplierName}</td>
                                     <td>{item.supplierEmail}</td>
-                                    <td>
-                                        {userIsAuthorized() && (
+                                    {userIsAuthorized() && (
+                                        <td>
                                             <Button variant="danger" size="sm" onClick={() => handleDelete(item.barcode)}>
                                                 Delete
                                             </Button>
-                                        )}
-                                    </td>
+                                        </td>
+                                    )}
+                                    {userIsAuthorized() && (
+                                        <td>
+                                            <Button variant="primary" size="sm" onClick={() => handleEdit(item)}>
+                                                Edit
+                                            </Button>
+                                        </td>
+                                    )}
+
                                 </tr>
                             ))}
                         </tbody>
@@ -217,9 +317,16 @@ export default function Inventory({devices}) {
                             <Button variant="secondary" onClick={() => setShow(false)}>
                                 Close
                             </Button>
+                            {!editMode &&
                             <Button variant="primary" onClick={handleAddItem}>
                                 Add
-                            </Button>
+                            </Button>}
+                            {
+                                editMode &&
+                                <Button variant="primary" onClick={handleEditItem}>
+                                    Edit
+                                </Button>
+                            }
                         </Container>
                     </Modal.Footer>
                 </Modal>
