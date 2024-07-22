@@ -1,17 +1,15 @@
+import 'bootstrap/dist/css/bootstrap.min.css';
+import './App.css';
+import { Container } from 'react-bootstrap';
+import Login from './Pages/Login';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import 'react-toastify/dist/ReactToastify.css';
+import axios from 'axios';
 import { useUserContext } from './Context/UserContextProvider';
 import { useEffect } from 'react';
-import { ToastContainer } from 'react-toastify';
-import axios from 'axios';
-
-import Login from './Pages/Login';
 import Home from './Pages/Home';
 import Users from './Pages/Users';
-import Inventory from './Pages/Invetory';
-
-import 'bootstrap/dist/css/bootstrap.min.css';
-import 'react-toastify/dist/ReactToastify.css';
-import './App.css';
+import { ToastContainer } from 'react-toastify';
 
 function App() {
   const { setUser, setLoggedIn, setToken, loggedIn, token } = useUserContext();
@@ -49,7 +47,6 @@ function App() {
         <Route path='/' element={<Home />} />
         <Route path='/login' element={<Login />} />
         <Route path='/users' element={<Users />} />
-        <Route path='/inventory' element={<Inventory />} />
       </Routes>
     </BrowserRouter>
   );
