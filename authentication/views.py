@@ -37,3 +37,21 @@ class UserView(APIView):
         user = User.objects.filter(email=email).first()
         user.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def put(self, request):
+        email = request.data['email']
+        user = User.objects.filter(email=email).first()
+        if not user:
+            return Response({'message': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        username = request.data.get('username', user.username)
+        userType = request.data.get('userType', user.userType)
+        if userType.lower() not in ['manager', 'cashier', 'admin']:
+            return Response({'message': 'Invalid user type'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        user.username = username
+        user.userType = userType
+        user.save()
+
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)

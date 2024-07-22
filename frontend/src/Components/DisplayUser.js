@@ -4,7 +4,7 @@ import './display.css';
 export default function DisplayUser() {
     const { user } = useUserContext();
     const Capitalize = (str) => {
-        return str.charAt(0).toUpperCase() + str.slice(1);
+        return str?.charAt(0)?.toUpperCase() + str?.slice(1);
     }
     return (
         <Container className="text-center user-container">

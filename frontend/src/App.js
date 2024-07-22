@@ -9,9 +9,10 @@ import { useUserContext } from './Context/UserContextProvider';
 import { useEffect } from 'react';
 import Home from './Pages/Home';
 import Users from './Pages/Users';
+import { ToastContainer } from 'react-toastify';
 
 function App() {
-  const { setUser, setLoggedIn, setToken } = useUserContext();
+  const { setUser, setLoggedIn, setToken, loggedIn, token } = useUserContext();
   const handleLogin = async() => {
     const token = localStorage.getItem('token');
     if(token) {
@@ -38,9 +39,10 @@ function App() {
 
   useEffect(() => {
     handleLogin();
-  }, [])
+  }, [token, loggedIn])
   return (
     <BrowserRouter>
+      <ToastContainer />
       <Routes>
         <Route path='/' element={<Home />} />
         <Route path='/login' element={<Login />} />

@@ -10,3 +10,7 @@
 .userType {
     font-weight: 500;
 }
+
+.btn-add {
+    margin: 10px auto;
+}
