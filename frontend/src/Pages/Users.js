@@ -133,11 +133,23 @@ export default function Users () {
         .then(() => {
             setEditMode(false);
             setShow(false);
+            setUsername('');
+            setEmail('');
+            setUserType('');
         })
         .catch((error)=> {
             console.log(error);
             toast.error('Something went wrong!');
         })
+    }
+
+    const handleClose = () => {
+        setShow(false);
+        setEditMode(false);
+        setUsername('');
+        setEmail('');
+        setUserType('');
+        setPassword('');
     }
     
 
@@ -152,7 +164,7 @@ export default function Users () {
 
     return (
         <Container className="page-container">
-            <NavigationBar />
+            <NavigationBar active="users" />
             <Container className="main-content">
                 <DisplayUser />
                 <h1 className="heading">Users</h1>
@@ -201,7 +213,7 @@ export default function Users () {
                 </Table>
             </Container>
             <Container className="modals">
-                <Modal show={show} onHide={() => setShow(false)}>
+                <Modal show={show} onHide={handleClose}>
                     <Modal.Header closeButton>
                         <Modal.Title>
                             Add User
