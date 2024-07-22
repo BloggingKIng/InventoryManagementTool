@@ -4,16 +4,15 @@ import DisplayUser from "../Components/DisplayUser";
 import { useUserContext } from "../Context/UserContextProvider";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { useMediaDevices } from 'react-media-devices';
-import { useZxing } from 'react-zxing';
 import Barcode from 'react-barcode';
 import axios from "axios";
 import './assets/inventory.css';
+import { useZxing } from 'react-zxing';
 
-export default function Inventory (){
-    const {user, loggedIn, token} = useUserContext();
+export default function Inventory({devices}) {
+    const { user, loggedIn, token } = useUserContext();
+    const [paused, setPaused] = useState(true);
     const [inventory, setInventory] = useState([]);
-    const [deviceId, setDeviceId] = useState(null);
     const [show, setShow] = useState(false);
     const [formData, setFormData] = useState({
         barcode: '',
@@ -24,60 +23,48 @@ export default function Inventory (){
         supplierEmail: '',
     });
 
-    const getDevices = async () => {
-        try {
-            const availableDevices = await navigator.mediaDevices.enumerateDevices();
-            const availableVideoDevices = availableDevices.filter(device => device.kind === 'videoinput');
-            if (availableVideoDevices.length > 0) {
-                return availableVideoDevices;
-            }
-            toast.error('No video devices found');
-            return [];
-        } catch (error) {
-            toast.error('Error accessing media devices');
-            return [];
-        }
-    };
-
-
-    const fetchInventory = async() => {
+    const fetchInventory = async () => {
         await axios.get('http://127.0.0.1:8000/api/inventory/', {
             headers: {
                 Authorization: `Token ${token}`
             }
         })
-        .then((response)=> {
+        .then((response) => {
             setInventory(response.data);
         })
-        .catch((error)=> {
+        .catch((error) => {
             toast.error('Something went wrong, Could not fetch inventory');
         })
-    }
+    };
+    
+    useEffect(() => {
+
+        if (token) {
+            fetchInventory();
+        }
+    }, [token]);
+
 
     const handleFormDataChange = (event) => {
         setFormData({
             ...formData,
             [event.target.name]: event.target.value
-        })
-    }
+        });
+    };
 
     const userIsAuthorized = () => {
-        if (user?.userType?.toLowerCase() === 'manager' || user?.userType?.toLowerCase() === 'admin' || user?.is_superuser) {
-            return true;
-        }
-        return false;
-    }
+        return user?.userType?.toLowerCase() === 'manager' || user?.userType?.toLowerCase() === 'admin' || user?.is_superuser;
+    };
 
-    const handleAddItem = async() => {
-        await axios.post('http://127.0.0.1:8000/api/inventory/', formData, {
-            headers: {
-                Authorization: `Token ${token}`
-            }
-        })
-        .then((response)=> {
+    const handleAddItem = async () => {
+        try {
+            await axios.post('http://127.0.0.1:8000/api/inventory/', formData, {
+                headers: {
+                    Authorization: `Token ${token}`
+                }
+            });
             toast.success('Item added successfully');
             setShow(false);
-            fetchInventory();
             setFormData({
                 barcode: '',
                 productName: '',
@@ -85,53 +72,42 @@ export default function Inventory (){
                 quantity: '',
                 supplierName: '',
                 supplierEmail: '',
-            })
-        })
-        .catch((error)=> {
+            });
+            fetchInventory();
+        } catch (error) {
             toast.error('Something went wrong, Could not add item');
-        })
-    }
+        }
+    };
 
-    const handleDelete = async(barcode) => {
-        await axios.delete(
-            'http://127.0.0.1:8000/api/inventory/',
-            {
+    const handleDelete = async (barcode) => {
+        try {
+            await axios.delete('http://127.0.0.1:8000/api/inventory/', {
                 headers: {
                     Authorization: `Token ${token}`
-                }, 
+                },
                 data: {
                     barcode: barcode
                 }
-            }
-        )
-        .then((response)=> {
+            });
             toast.success('Item deleted successfully');
             fetchInventory();
-        })
-        .catch((error)=> {
+        } catch (error) {
             toast.error('Something went wrong, Could not delete item');
-        })
-    }
-
-    useEffect(() => {
-        if (token){
-            fetchInventory();
         }
-        getDevices();
-        console.log(getDevices())
-    }, [token])
+    };
 
     const { ref } = useZxing({
-        onResult(newScan) {
-          console.log(newScan);
-        },
-        deviceId,
-        paused:false
+        deviceId: devices.length > 0 ? devices[0].deviceId : null,
+        paused: paused,
+        onDecodeResult: (result) => {
+            console.log(result);
+            setFormData({
+                ...formData,
+                barcode: result.text
+            })
+            setPaused(true);
+        }
     });
-
-    console.log(ref)
-    
-    
 
     if (!loggedIn) {
         return (
@@ -139,20 +115,20 @@ export default function Inventory (){
                 <NavigationBar />
                 <h1 className="major-heading">Please login to continue</h1>
             </Container>
-        )
+        );
     }
+
     return (
         <Container className="page-container">
-            <NavigationBar active="inventory"/>
+            <NavigationBar active="inventory" />
             <Container className="page-container">
                 <DisplayUser />
                 <h1 className="heading">Inventory</h1>
-                {
-                    userIsAuthorized() &&
-                        <Container className="button-container">
-                            <Button variant="warning" className="btn-add" size="md" onClick={() => setShow(true)}>Add Item</Button>
-                        </Container>
-                }
+                {userIsAuthorized() && (
+                    <Container className="button-container">
+                        <Button variant="warning" className="btn-add" size="md" onClick={() => setShow(true)}>Add Item</Button>
+                    </Container>
+                )}
                 <Container className="inventory-table-container">
                     <Table responsive hover striped bordered>
                         <thead>
@@ -168,29 +144,26 @@ export default function Inventory (){
                             </tr>
                         </thead>
                         <tbody>
-                            {
-                                inventory.map((item, index) => (
-                                    <tr key={index}>
-                                        <td>{index + 1}</td>
-                                        <td>
-                                            <Barcode value={item.barcode} height={25} fontSize={20} />
-                                        </td>
-                                        <td>{item.productName}</td>
-                                        <td>{item.price}</td>
-                                        <td>{item.quantity}</td>
-                                        <td>{item.supplierName}</td>
-                                        <td>{item.supplierEmail}</td>
-                                        <td>
-                                            {
-                                                userIsAuthorized() && 
-                                                <Button variant="danger" size="sm" onClick={() => handleDelete(item.barcode)}>
-                                                    Delete
-                                                </Button>
-                                            }
-                                        </td>
-                                    </tr>
-                                ))
-                            }
+                            {inventory.map((item, index) => (
+                                <tr key={index}>
+                                    <td>{index + 1}</td>
+                                    <td>
+                                        <Barcode value={item.barcode} height={25} fontSize={20} />
+                                    </td>
+                                    <td>{item.productName}</td>
+                                    <td>{item.price}</td>
+                                    <td>{item.quantity}</td>
+                                    <td>{item.supplierName}</td>
+                                    <td>{item.supplierEmail}</td>
+                                    <td>
+                                        {userIsAuthorized() && (
+                                            <Button variant="danger" size="sm" onClick={() => handleDelete(item.barcode)}>
+                                                Delete
+                                            </Button>
+                                        )}
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
                     </Table>
                 </Container>
@@ -205,7 +178,17 @@ export default function Inventory (){
                             <Form.Group className="mb-3">
                                 <Form.Label>Bar Code</Form.Label>
                                 <Form.Control type="text" name="barcode" value={formData.barcode} onChange={handleFormDataChange} />
-                                <video ref={ref} style={{height: '300px', width: '300px'}} />
+                                <Container className="button-container barcode-container">
+                                    <Button onClick={() => setPaused(false)}>Scan Barcode</Button>
+                                    {!paused && <Button onClick={() => setPaused(true)}>Stop Scanning</Button>}
+                                </Container>
+                                {
+                                    !paused && 
+                                        <Container className="video-container">
+                                            <video ref={ref} style={{width:'300px', height:'300px'}} />
+                                        </Container>
+                                }
+
                             </Form.Group>
                             <Form.Group className="mb-3">
                                 <Form.Label>Item Name</Form.Label>
@@ -242,5 +225,5 @@ export default function Inventory (){
                 </Modal>
             </Container>
         </Container>
-    )
+    );
 }

@@ -10,6 +10,7 @@
     "bootstrap": "^5.3.3",
     "react": "^18.3.1",
     "react-barcode": "^1.5.3",
+    "react-barcode-reader": "^0.0.2",
     "react-bootstrap": "^2.10.4",
     "react-dom": "^18.3.1",
     "react-media-devices": "^1.1.5",

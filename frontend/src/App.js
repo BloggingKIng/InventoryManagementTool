@@ -6,13 +6,24 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
 import { useUserContext } from './Context/UserContextProvider';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Home from './Pages/Home';
 import Users from './Pages/Users';
 import { ToastContainer } from 'react-toastify';
+import Inventory from './Pages/Invetory';
 
 function App() {
   const { setUser, setLoggedIn, setToken, loggedIn, token } = useUserContext();
+  const [devices, setDevices] = useState([]);
+  useEffect(() => {
+    const loadDevices = async () => {
+        let availableDevices = await navigator.mediaDevices.enumerateDevices();
+        availableDevices = availableDevices.filter(device => device.kind === 'videoinput');
+        setDevices(availableDevices);
+    };
+
+    loadDevices();
+}, []);
   const handleLogin = async() => {
     const token = localStorage.getItem('token');
     if(token) {
@@ -47,6 +58,7 @@ function App() {
         <Route path='/' element={<Home />} />
         <Route path='/login' element={<Login />} />
         <Route path='/users' element={<Users />} />
+        <Route path='/inventory' element={<Inventory devices={devices} />} />
       </Routes>
     </BrowserRouter>
   );

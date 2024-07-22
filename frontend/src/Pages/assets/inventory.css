@@ -2,3 +2,15 @@
     margin-right: 10px;
     margin-left: 10px;
 }
+
+.barcode-container {
+    margin: 10px auto;
+    justify-content: space-around;
+    width: 80%;
+}
+
+.video-container {
+    display: flex;
+    width: 100%;
+    justify-content: center;
+}
