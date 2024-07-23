@@ -61,7 +61,7 @@ class OrderView(APIView):
     def post(self, request):
         customer_name = request.data['customer_name']
         customer_phone = request.data['customer_phone']
-        product_data = request.data['order_items'] # We expect it to be a list dicts of the format produc_id: quatity 
+        product_data = request.data['order_items'] # We expect it to be a dict storing values in the format produc_id: quatity 
         product_data = json.loads(product_data)
         order_items = []
         for product_id, quantity in product_data.items():

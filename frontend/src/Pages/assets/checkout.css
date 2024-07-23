@@ -29,3 +29,17 @@
 .quantity-number {
     width: 100px;
 }
+
+.customer-form-container {
+    display: flex;
+    justify-content: space-around;
+}
+
+.customer-form-container > div {
+    flex: 0.4;
+    margin: 10px;
+}
+
+.button-container > * {
+    margin: 10px;
+}

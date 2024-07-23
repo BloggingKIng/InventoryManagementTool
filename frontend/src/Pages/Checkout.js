@@ -3,9 +3,10 @@ import DisplayUser from "../Components/DisplayUser";
 
 import { Container, Form, Button, Table } from "react-bootstrap";
 import { useUserContext } from "../Context/UserContextProvider";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { toast } from "react-toastify";
 import { useZxing } from "react-zxing";
+import { useReactToPrint } from 'react-to-print';
 
 import axios from "axios";
 import './assets/checkout.css';
@@ -17,6 +18,8 @@ export default function Checkout({devices}) {
     const [paused, setPaused] = useState(true);
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
+    const [checkingOut, setCheckingOut] = useState(false);
+    const receiptRef = useRef();
 
     
     const getItemByBarcode = async (barcode) => {
@@ -82,6 +85,63 @@ export default function Checkout({devices}) {
             return;
         }
     }
+    
+    const handlePrint = useReactToPrint({
+        content: () => receiptRef.current,
+    });
+
+    const handleCancelCheckout = () => {
+        setOrderItems([]);
+        setCustomerName('');
+        setCustomerPhone('');
+        setPaused(true);
+    }
+
+    const handleCheckout = async () => {
+        if (!customerName || !customerPhone) {
+            toast.error('Cusomer\'s name and phone number are required');
+            return;
+        }
+
+        if (orderItems.length === 0) {
+            toast.error('There are no items to order');
+            return;
+        }
+
+        setCheckingOut(true);
+
+        let productData = {}
+        for (let item of orderItems) {
+            productData[item.id] = item.purchaseQuantity;
+        }
+        
+        console.log(productData);
+
+        await axios.post('http://127.0.0.1:8000/api/order/', {
+            customer_name: customerName,
+            customer_phone: customerPhone,
+            order_items: JSON.stringify(productData)
+        }, {
+            headers: {
+                Authorization: `Token ${token}`
+            }
+        })
+        .then((response) => {
+            toast.success('Checkout successful');
+            handlePrint();
+            setOrderItems([]);
+            setCustomerName('');
+            setCustomerPhone('');
+            setCheckingOut(false);
+            setPaused(true);
+        })
+        .catch((error) => {
+            console.log(error);
+            toast.error('Something went wrong while checking out, please try again');
+            setCheckingOut(false);
+        })
+    }
+
 
     if(!loggedIn){
         return (
@@ -119,8 +179,12 @@ export default function Checkout({devices}) {
                 </Container>
                 <Container className="order-items-container mt-3">
                     <h2 className="heading">Order Items</h2>
-                    <Container className="order-items">
-                        <Table striped bordered hover>
+                    <Container className="order-items" ref={receiptRef}>
+                        {checkingOut && <Container>
+                            <h1 className="heading">Inventory Management Tool</h1>
+                            <h2 className="heading">(Order Summary)</h2>
+                        </Container>}
+                        <Table striped bordered hover >
                             <thead>
                                 <tr>
                                     <th>#</th>
@@ -128,7 +192,7 @@ export default function Checkout({devices}) {
                                     <th>Quantity</th>
                                     <th>Price</th>
                                     <th>Total Price</th>
-                                    <th>Remove</th>
+                                    {!checkingOut && <th>Remove</th>}
                                 </tr>   
                             </thead>
                             <tbody>
@@ -137,19 +201,22 @@ export default function Checkout({devices}) {
                                         <td>{index + 1}</td>
                                         <td>{item.productName}</td>
                                         <td>
-                                            <Form.Control type="number" className="quantity-number" 
+                                            {!checkingOut && <Form.Control type="number" className="quantity-number" 
                                                 value={item.purchaseQuantity} 
                                                 onChange={(e) => handleQuantityChange(item, e.target.value)} 
                                                 onBlur={(e) => validateQuantity(item, e.target.value)}
-                                            />
+                                            />}
+                                            {
+                                                checkingOut && <strong>{item.purchaseQuantity}</strong>
+                                            }
                                         </td>
                                         <td>{item.price}</td>
                                         <td>PKR {item.purchaseQuantity * item.price}</td>
-                                        <td>
+                                        {!checkingOut && <td>
                                             <Button variant="danger" size="sm" onClick={() => removeItem(item.barcode)}>
                                                 Remove
                                             </Button>
-                                        </td>
+                                        </td>}
                                     </tr>
                                 ))}
                             </tbody>
@@ -166,11 +233,41 @@ export default function Checkout({devices}) {
                                     </td>
                                 </tr>
                                 <tr>
-                                    
+                                    <td colSpan={3}>
+                                        <strong>
+                                            Customer Name: {customerName}
+                                        </strong>
+                                    </td>
+                                    <td colSpan={3}>
+                                        <strong>
+                                            Customer Phone: {customerPhone}
+                                        </strong>
+                                    </td>
                                 </tr>
                             </tfoot>
                         </Table>
                     </Container>
+                    <Container className="customer-info">
+                        <h2 className="heading">Customer Info</h2>
+                        <Container className="customer-form-container">
+                            <Form.Group>
+                                <Form.Label>Customer Name</Form.Label>
+                                <Form.Control type="text" placeholder="Enter Name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+                            </Form.Group>
+                            <Form.Group>    
+                                <Form.Label>Customer Phone</Form.Label>
+                                <Form.Control type="phone" placeholder="Enter Customer's Phone" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
+                            </Form.Group>
+                        </Container>
+                    </Container>
+                </Container>
+                <Container className="button-container">
+                    <Button variant="danger" onClick={handleCancelCheckout}>
+                        Cancel
+                    </Button>
+                    <Button variant="primary" onClick={handleCheckout}>
+                        Checkout
+                    </Button>
                 </Container>
             </Container>
         </Container>
