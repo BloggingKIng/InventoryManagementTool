@@ -115,7 +115,9 @@ export default function Inventory({devices}) {
                 setQuery(result.text);
             }
             setPaused(true);
-        }
+            setScan(false);
+        },
+        timeBetweenDecodingAttempts: 1,
     });
 
     const handleEdit = (item) => {
@@ -240,7 +242,7 @@ export default function Inventory({devices}) {
                                 <tr key={index}>
                                     <td>{index + 1}</td>
                                     <td>
-                                        <Barcode value={item.barcode} height={25} fontSize={20} />
+                                        <Barcode value={item.barcode} height={55} fontSize={20} format="CODE128"/>
                                     </td>
                                     <td>{item.productName}</td>
                                     <td>{item.price}</td>

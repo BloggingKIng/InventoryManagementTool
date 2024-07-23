@@ -1,7 +1,7 @@
 import NavigationBar from "../Components/Navbar";
 import DisplayUser from "../Components/DisplayUser";
 
-import {Container, Form, Button} from "react-bootstrap";
+import { Container, Form, Button, Table } from "react-bootstrap";
 import { useUserContext } from "../Context/UserContextProvider";
 import { useState } from "react";
 import { toast } from "react-toastify";
@@ -15,6 +15,8 @@ export default function Checkout({devices}) {
     const [orderItems, setOrderItems] = useState([]);
     const [barcode, setBarcode] = useState('');
     const [paused, setPaused] = useState(true);
+    const [customerName, setCustomerName] = useState('');
+    const [customerPhone, setCustomerPhone] = useState('');
 
     
     const getItemByBarcode = async (barcode) => {
@@ -41,18 +43,44 @@ export default function Checkout({devices}) {
         })
         
     }
+
+    const removeItem = (barcode) => {
+        setOrderItems(orderItems.filter((item) => item.barcode !== barcode));
+    }
     
     const {ref} = useZxing({
-        onDetected: (result) => {
+        onDecodeResult: (result) => {
             getItemByBarcode(result.text);
-            setPaused(true);
         },
         deviceId: devices.length > 0 && devices[0].deviceId,
         paused: paused,
+        timeBetweenDecodingAttempts: 1,
     });
     const handleScan = () => {
         setPaused((prev) => !prev);
         setBarcode('');
+    }
+
+    const handleQuantityChange = (item, quantity) => {
+        console.log(quantity);
+
+        if (quantity <= 0 && quantity) {
+            removeItem(item.barcode);
+            return;
+        }
+        setOrderItems(orderItems.map((orderItem) => {
+            if(orderItem.barcode === item.barcode) {
+                return {...orderItem, purchaseQuantity: quantity};
+            }
+            return orderItem;
+        }));
+    }
+
+    const validateQuantity = (item, quantity) => {
+        if (quantity <= 0 || !quantity) {
+            removeItem(item.barcode);
+            return;
+        }
     }
 
     if(!loggedIn){
@@ -86,11 +114,63 @@ export default function Checkout({devices}) {
                         </Button>
                     </Container>
                 </Container>
-                <Container className="video-container">
+                <Container className={paused ? 'video-container d-none' : 'video-container'}>
                     <video ref={ref} style={{width:'300px'}}/>
                 </Container>
-                <Container className="order-items-container">
-                    
+                <Container className="order-items-container mt-3">
+                    <h2 className="heading">Order Items</h2>
+                    <Container className="order-items">
+                        <Table striped bordered hover>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Item Name</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Total Price</th>
+                                    <th>Remove</th>
+                                </tr>   
+                            </thead>
+                            <tbody>
+                                {orderItems.map((item, index) => (
+                                    <tr key={index}>
+                                        <td>{index + 1}</td>
+                                        <td>{item.productName}</td>
+                                        <td>
+                                            <Form.Control type="number" className="quantity-number" 
+                                                value={item.purchaseQuantity} 
+                                                onChange={(e) => handleQuantityChange(item, e.target.value)} 
+                                                onBlur={(e) => validateQuantity(item, e.target.value)}
+                                            />
+                                        </td>
+                                        <td>{item.price}</td>
+                                        <td>PKR {item.purchaseQuantity * item.price}</td>
+                                        <td>
+                                            <Button variant="danger" size="sm" onClick={() => removeItem(item.barcode)}>
+                                                Remove
+                                            </Button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colSpan={2}>
+                                        Cashier: {user.username} ({user.email})
+                                    </td>
+                                    <td colSpan={2} className="text-end">Total</td>
+                                    <td>
+                                        <strong>
+                                            PKR {orderItems.reduce((total, item) => total + item.purchaseQuantity * item.price, 0)}
+                                        </strong>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    
+                                </tr>
+                            </tfoot>
+                        </Table>
+                    </Container>
                 </Container>
             </Container>
         </Container>
