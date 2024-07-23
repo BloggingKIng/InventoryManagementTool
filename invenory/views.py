@@ -92,8 +92,9 @@ class OrderView(APIView):
 
 
 @permission_classes([IsAuthenticated])
-def get_order_details(request, order_id):
-    order = Order.objects.filter(orderId=order_id).first()
+@api_view(['GET'])
+def get_order_details(request, orderId):
+    order = Order.objects.filter(orderId=f"#{orderId}").first()
     if not order:
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = OrderSerializer(order)

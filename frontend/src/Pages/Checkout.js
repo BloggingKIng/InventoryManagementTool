@@ -6,8 +6,7 @@ import { useUserContext } from "../Context/UserContextProvider";
 import { useState, useRef } from "react";
 import { toast } from "react-toastify";
 import { useZxing } from "react-zxing";
-import { useReactToPrint } from 'react-to-print';
-
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import './assets/checkout.css';
 
@@ -18,9 +17,7 @@ export default function Checkout({devices}) {
     const [paused, setPaused] = useState(true);
     const [customerName, setCustomerName] = useState('');
     const [customerPhone, setCustomerPhone] = useState('');
-    const [checkingOut, setCheckingOut] = useState(false);
-    const receiptRef = useRef();
-
+    const navigate = useNavigate();
     
     const getItemByBarcode = async (barcode) => {
         if (!barcode) {
@@ -86,10 +83,6 @@ export default function Checkout({devices}) {
         }
     }
     
-    const handlePrint = useReactToPrint({
-        content: () => receiptRef.current,
-    });
-
     const handleCancelCheckout = () => {
         setOrderItems([]);
         setCustomerName('');
@@ -107,8 +100,6 @@ export default function Checkout({devices}) {
             toast.error('There are no items to order');
             return;
         }
-
-        setCheckingOut(true);
 
         let productData = {}
         for (let item of orderItems) {
@@ -128,17 +119,15 @@ export default function Checkout({devices}) {
         })
         .then((response) => {
             toast.success('Checkout successful');
-            handlePrint();
             setOrderItems([]);
             setCustomerName('');
             setCustomerPhone('');
-            setCheckingOut(false);
             setPaused(true);
+            navigate(`/receipt/${response.data.orderId.substring(1)}`);
         })
         .catch((error) => {
             console.log(error);
             toast.error('Something went wrong while checking out, please try again');
-            setCheckingOut(false);
         })
     }
 
@@ -179,12 +168,8 @@ export default function Checkout({devices}) {
                 </Container>
                 <Container className="order-items-container mt-3">
                     <h2 className="heading">Order Items</h2>
-                    <Container className="order-items" ref={receiptRef}>
-                        {checkingOut && <Container>
-                            <h1 className="heading">Inventory Management Tool</h1>
-                            <h2 className="heading">(Order Summary)</h2>
-                        </Container>}
-                        <Table striped bordered hover >
+                    <Container className="order-items">
+                        <Table striped bordered hover>
                             <thead>
                                 <tr>
                                     <th>#</th>
@@ -192,7 +177,7 @@ export default function Checkout({devices}) {
                                     <th>Quantity</th>
                                     <th>Price</th>
                                     <th>Total Price</th>
-                                    {!checkingOut && <th>Remove</th>}
+                                    <th>Remove</th>
                                 </tr>   
                             </thead>
                             <tbody>
@@ -201,22 +186,19 @@ export default function Checkout({devices}) {
                                         <td>{index + 1}</td>
                                         <td>{item.productName}</td>
                                         <td>
-                                            {!checkingOut && <Form.Control type="number" className="quantity-number" 
+                                            <Form.Control type="number" className="quantity-number" 
                                                 value={item.purchaseQuantity} 
                                                 onChange={(e) => handleQuantityChange(item, e.target.value)} 
                                                 onBlur={(e) => validateQuantity(item, e.target.value)}
-                                            />}
-                                            {
-                                                checkingOut && <strong>{item.purchaseQuantity}</strong>
-                                            }
+                                            />
                                         </td>
                                         <td>{item.price}</td>
                                         <td>PKR {item.purchaseQuantity * item.price}</td>
-                                        {!checkingOut && <td>
+                                        <td>
                                             <Button variant="danger" size="sm" onClick={() => removeItem(item.barcode)}>
                                                 Remove
                                             </Button>
-                                        </td>}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>

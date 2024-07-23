@@ -12,6 +12,7 @@ import Users from './Pages/Users';
 import { ToastContainer } from 'react-toastify';
 import Inventory from './Pages/Invetory';
 import Checkout from './Pages/Checkout';
+import Receipt from './Pages/Receipt';
 
 function App() {
   const { setUser, setLoggedIn, setToken, loggedIn, token } = useUserContext();
@@ -61,6 +62,7 @@ function App() {
         <Route path='/users' element={<Users />} />
         <Route path='/inventory' element={<Inventory devices={devices} />} />
         <Route path='/checkout' element={<Checkout devices={devices} />} />
+        <Route path='/receipt/:id' element={<Receipt />} />
       </Routes>
     </BrowserRouter>
   );
