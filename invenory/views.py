@@ -7,6 +7,7 @@ from .serializers import InventorySerializer, OrderSerializer
 from rest_framework.decorators import permission_classes
 from .permissions import InventoryPermission, OrderPermission
 from rest_framework import status
+from rest_framework.decorators import api_view
 import json
 # Create your views here.
 
@@ -42,9 +43,10 @@ class InventoryView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 @permission_classes([IsAuthenticated])
+@api_view(['GET'])
 def get_inventory_details(request, barcode):
     inventory = Inventory.objects.filter(barcode=barcode).first()
-    if not inventory:
+    if not inventory or inventory.quantity <= 0:
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = InventorySerializer(inventory)
     return Response(serializer.data, status=status.HTTP_200_OK)
