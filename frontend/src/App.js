@@ -13,6 +13,7 @@ import { ToastContainer } from 'react-toastify';
 import Inventory from './Pages/Invetory';
 import Checkout from './Pages/Checkout';
 import Receipt from './Pages/Receipt';
+import Orders from './Pages/Orders';
 
 function App() {
   const { setUser, setLoggedIn, setToken, loggedIn, token } = useUserContext();
@@ -63,6 +64,7 @@ function App() {
         <Route path='/inventory' element={<Inventory devices={devices} />} />
         <Route path='/checkout' element={<Checkout devices={devices} />} />
         <Route path='/receipt/:id' element={<Receipt />} />
+        <Route path='/orders' element={<Orders />} />
       </Routes>
     </BrowserRouter>
   );

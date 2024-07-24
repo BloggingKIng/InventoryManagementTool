@@ -182,10 +182,14 @@ export default function Inventory({devices}) {
        }
     }, [query]);
 
+    const deleteAuthorized = () => {
+        return user?.userType?.toLowerCase() === 'admin' || user?.is_superuser;
+    };
+
     if (!loggedIn) {
         return (
             <Container className="page-container">
-                <NavigationBar />
+                <NavigationBar active="inventory" />
                 <h1 className="major-heading">Please login to continue</h1>
             </Container>
         );

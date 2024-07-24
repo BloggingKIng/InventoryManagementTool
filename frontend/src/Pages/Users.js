@@ -152,7 +152,7 @@ export default function Users () {
 
     return (
         <Container className="page-container">
-            <NavigationBar />
+            <NavigationBar active="users" />
             <Container className="main-content">
                 <DisplayUser />
                 <h1 className="heading">Users</h1>

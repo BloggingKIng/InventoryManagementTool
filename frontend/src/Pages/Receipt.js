@@ -40,6 +40,15 @@ export default function Receipt() {
             fetchOrder();
         }
     }, [token])
+
+    if (!loggedIn) {
+        return (
+            <Container className='page-container'>
+                <NavigationBar active='home' />
+                <h1 className='major-heading'>Please login to continue</h1>
+            </Container>
+        )
+    }
     
     return (
         <Container className="page-container">
@@ -84,7 +93,7 @@ export default function Receipt() {
                             </tfoot>
                         </Table>
                         <p className="date text-center">
-                            This receipt was generated on {new Date(order.orderDate).toLocaleDateString()}
+                            This receipt was generated on {new Date(order.orderDate).toLocaleDateString()}&nbsp;
                             at {new Date(order.orderDate).toLocaleTimeString()}
                         </p>
                     </Container>
