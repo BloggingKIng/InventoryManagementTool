@@ -55,7 +55,7 @@ class OrderView(APIView):
     permission_classes = (OrderPermission,)
     def get(self, request):
         orders = Order.objects.all()
-        orders = orders.order_by('-orderDate')
+        # orders = orders.order_by('-orderDate')
         serializer = OrderSerializer(orders, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     

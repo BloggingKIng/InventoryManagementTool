@@ -1,14 +1,18 @@
-import { Container, Table } from 'react-bootstrap';
+import { Container, Table, Button } from 'react-bootstrap';
 import NavigationBar from '../Components/Navbar';
 import DisplayUser from '../Components/DisplayUser';
 import { useUserContext } from '../Context/UserContextProvider';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { DataGrid } from '@mui/x-data-grid';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import './assets/orders.css';
 
 export default function Orders(){
     const {user, loggedIn, token} = useUserContext();
     const [orders, setOrders] = useState([]);
+    const navigate = useNavigate();
 
     const fetchOrders = async () => {
         await axios.get('http://127.0.0.1:8000/api/order/', {
@@ -31,12 +35,69 @@ export default function Orders(){
         }
     }, [token])
 
+    const getActualId = (id) => {
+        return (
+            id.slice(1)
+        )
+    }
+
+    const userIsAuthorized = () => {
+        return user?.userType?.toLowerCase() === 'admin';
+    }
+
+    const handleDelete = async (id) => {
+        await axios.delete(`http://127.0.0.1:8000/api/order/`, {
+            headers: {
+                Authorization: `Token ${token}`
+            },
+            data: {
+                orderId: id
+            }
+        })
+        .then((response) => {
+            console.log(response.data);
+            toast.success('Order deleted successfully!');
+            fetchOrders();
+        })
+        .catch((error) => {
+            console.log(error);
+            toast.error('Something went wrong, Could not delete order');
+        })
+    }
+
     const columns = [
-        { field: 'orderId', headerName: 'Order ID', width: '100' },
-        { field: 'orderDate', headerName: 'Order Date', width: 220 },
-        { field: 'customerName', headerName: 'Customer Name', width: 150 },
-        { field: 'customerPhone', headerName: 'Customer Phone', width: 150 },
-        { field: 'totalPrice', headerName: 'Total Price', width: 150 },
+        { field: 'orderId', headerName: 'Order ID', flex:1, align:'center', headerAlign:'center'},
+        { field: 'orderDate', headerName: 'Order Date', flex:1, align:'center', headerAlign:'center'},
+        { field: 'customerName', headerName: 'Customer Name', flex:1, align:'center', headerAlign:'center', sortable: false },
+        { field: 'customerPhone', headerName: 'Customer Phone', flex:1, align:'center', headerAlign:'center', sortable: false },
+        { field: 'totalPrice', headerName: 'Total Price (PKR)', flex:1, align:'center', headerAlign:'center' },
+        { field: 'receipt', headerName: 'Receipt', flex:1, align:'center', headerAlign:'center', sortable: false, 
+            renderCell: 
+                (params)=> {
+                    return (
+                        <Button 
+                            variant='primary' 
+                            size='sm'
+                            onClick={() => navigate(`/receipt/${getActualId(params.row.orderId)}`)}
+                        >
+                            Order Receipt
+                        </Button>
+                    )
+                }
+        },
+        {field: 'delete', headerName: 'Delete', flex:1, align:'center', headerAlign:'center', sortable: false, 
+            renderCell: (params)=> {
+                return (
+                    <Button 
+                        variant='danger' 
+                        size='sm'
+                        onClick={()=>handleDelete(params.row.orderId)}
+                    >
+                        Delete
+                    </Button>
+                )
+            }
+        }
     ]
 
     const rows = orders.map((order) => ({
@@ -45,7 +106,7 @@ export default function Orders(){
         orderDate: `${new Date(order.orderDate).toLocaleDateString()} ${new Date(order.orderDate).toLocaleTimeString()}`,
         customerName: order.customerName,
         customerPhone: order.customerPhone,
-        totalPrice: order.total_price
+        totalPrice: `PKR ${order.total_price}`
     }))
 
     
@@ -65,7 +126,7 @@ export default function Orders(){
             <Container>    
                 <h1 className='heading'>Orders</h1>
                 <Container className='orders-container'>
-                    <Table striped bordered hover>
+                    {/* <Table striped bordered hover>
                         <thead>
                             <tr>
                                 <th>Order ID</th>
@@ -89,7 +150,28 @@ export default function Orders(){
                                 </tr>
                             ))}
                         </tbody>
-                    </Table>
+                    </Table> */}
+                    <DataGrid 
+                        className='data-grid' 
+                        rows={rows} 
+                        columns={columns} 
+                        initialState={{
+                            pagination: {
+                                paginationModel: { pageSize: 5, page: 0 },
+                            },
+                            columns: {
+                                columnVisibilityModel: {
+                                    delete: userIsAuthorized(),
+                                }
+                            }
+                        }}
+                        sx={{
+                            "&.MuiDataGrid-root .MuiDataGrid-cell:focus-within": {
+                               outline: "none !important",
+                            },
+                         }}
+                         disableColumnMenu={true}
+                    />
                 </Container>
             </Container>
             </Container>

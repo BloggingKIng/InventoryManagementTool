@@ -100,6 +100,7 @@ export default function Receipt() {
                 </Container>
             </Container>
             <Container className="button-container">
+                <Button variant="primary" onClick={() => navigate('/orders')}>Back to Orders</Button>
                 <Button variant="primary" onClick={handlePrint}>Print</Button>
                 <Button variant="primary" onClick={() => navigate('/checkout')} >Back to Checkout</Button>
             </Container>
