@@ -2,8 +2,8 @@ from django.shortcuts import render
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Inventory, Order, OrderItem
-from .serializers import InventorySerializer, OrderSerializer
+from .models import Inventory, Order, OrderItem, StockAlert, Alert
+from .serializers import InventorySerializer, OrderSerializer, StockAlertSerializer, AlertSerializer
 from rest_framework.decorators import permission_classes
 from .permissions import InventoryPermission, OrderPermission
 from rest_framework import status
@@ -100,3 +100,59 @@ def get_order_details(request, orderId):
         return Response(status=status.HTTP_404_NOT_FOUND)
     serializer = OrderSerializer(order)
     return Response(serializer.data)
+
+class StockAlertView(APIView):
+    permission_classes = (InventoryPermission,)
+    def get(self, request):
+        stock_alerts = StockAlert.objects.all()
+        serializer = StockAlertSerializer(stock_alerts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        try:
+            product_ids = request.data['product_ids']
+            product_ids = json.loads(product_ids)
+        except KeyError:
+            return Response({"error": "Field product_ids is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            threshold = request.data['threshold']
+        except KeyError:
+            return Response({"error": "Field threshold is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        print(product_ids)
+        data = []
+
+        for product_id in product_ids:
+            product = Inventory.objects.filter(id=product_id).first()
+            product = InventorySerializer(product).data
+            if not product:
+                continue
+            stock_alert = StockAlertSerializer(data={'product_id': product_id, 'threshold': threshold})
+            if stock_alert.is_valid():
+                stock_alert.save()
+            else:
+                return Response(stock_alert.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            data.append(dict(stock_alert.data))
+
+        return Response(data,status=status.HTTP_201_CREATED)
+
+    def delete(self, request):
+        stock_id = request.data['stock_id']
+        stock = StockAlert.objects.filter(id=stock_id).first()
+        if not stock:
+            return Response({"error": "Stock alert not found"}, status=status.HTTP_404_NOT_FOUND)
+        stock.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+    def put(self, request):
+        stock_id = request.data['stock_id']
+        stock = StockAlert.objects.filter(id=stock_id).first()
+        if not stock:
+            return Response({"error": "Stock alert not found"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = StockAlertSerializer(stock, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

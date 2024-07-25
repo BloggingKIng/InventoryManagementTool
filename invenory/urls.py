@@ -6,4 +6,5 @@ urlpatterns  = [
     path('inventory/<str:barcode>/',views.get_inventory_details),
     path('order/',views.OrderView.as_view()),
     path('order/<str:orderId>/',views.get_order_details),
+    path('stock-alert/',views.StockAlertView.as_view()),
 ]

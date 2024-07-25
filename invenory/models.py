@@ -1,5 +1,5 @@
 from django.db import models
-
+from authentication.models import User
 # Create your models here.
 class Inventory(models.Model):
     barcode = models.CharField(max_length=100)
@@ -33,3 +33,18 @@ class Order(models.Model):
 
     def __str__(self):
         return f"{self.orderId} -- {self.customerName}"
+
+class StockAlert(models.Model):
+    product = models.ForeignKey(Inventory, on_delete=models.CASCADE)
+    threshold = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.product} -- {self.threshold}"
+    
+class Alert(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.CharField(max_length=100)
+    datetime = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user} ({self.content})"

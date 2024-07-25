@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Inventory, Order, OrderItem
+from .models import Inventory, Order, OrderItem, StockAlert, Alert
+from authentication.serializers import UserSerializer
 
 class InventorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -27,3 +28,20 @@ class OrderSerializer(serializers.ModelSerializer):
             price = price * product.quantity
             total += price
         return total
+    
+class StockAlertSerializer(serializers.ModelSerializer):
+    product = InventorySerializer(read_only=True)
+    product_id = serializers.PrimaryKeyRelatedField(queryset=Inventory.objects.all())
+    class Meta:
+        model = StockAlert
+        fields = '__all__'
+
+    def create(self, validated_data):
+        print(validated_data)
+        return StockAlert.objects.create(product=validated_data['product_id'], threshold=validated_data['threshold'])
+
+class AlertSerializer(serializers.ModelSerializer):
+    user = UserSerializer()
+    class Meta:
+        model = Alert
+        fields = '__all__'
