@@ -14,6 +14,7 @@ import Inventory from './Pages/Invetory';
 import Checkout from './Pages/Checkout';
 import Receipt from './Pages/Receipt';
 import Orders from './Pages/Orders';
+import StockAlerts from './Pages/StockAlerts';
 
 function App() {
   const { setUser, setLoggedIn, setToken, loggedIn, token } = useUserContext();
@@ -65,6 +66,7 @@ function App() {
         <Route path='/checkout' element={<Checkout devices={devices} />} />
         <Route path='/receipt/:id' element={<Receipt />} />
         <Route path='/orders' element={<Orders />} />
+        <Route path='/stock-alerts' element={<StockAlerts />} />
       </Routes>
     </BrowserRouter>
   );

@@ -39,7 +39,7 @@ export default function NavigationBar({active='inventory'}) {
                     <Navbar.Brand href="/">Inventory Management Tool</Navbar.Brand>
                     <Navbar.Toggle />
                     <Navbar.Collapse className="justify-content-end">
-                        <Nav className={loggedIn?'':'short-nav'}>
+                        <Nav className={loggedIn?isAuthorizedUser()?'navbar-nav-admin':'navbar-nav':'short-nav'}>
                             <Nav.Link  className={active=='home'?'active':''} href="/">Home</Nav.Link>
                             {loggedIn&&<>
                                 <Nav.Link  className={active=='inventory'?'active':''} href="/inventory">Inventory</Nav.Link>
@@ -49,6 +49,9 @@ export default function NavigationBar({active='inventory'}) {
                             </>}
                             {
                                 isAuthorizedUser() && <Nav.Link  className={active=='users'?'active':''} href="/users">Users</Nav.Link>
+                            }
+                            {
+                                isAuthorizedUser() && <Nav.Link  className={active=='stocks'?'active':''} href="/stock-alerts">Stock Alerts</Nav.Link>
                             }
                             {loggedIn?(
                                 <Nav.Item className='btn btn-primary nav-btn' onClick={handleLogout}>Logout</Nav.Item>
