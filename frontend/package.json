@@ -21,6 +21,7 @@
     "react-media-devices": "^1.1.5",
     "react-router-dom": "^6.25.1",
     "react-scripts": "5.0.1",
+    "react-select": "^5.8.0",
     "react-to-print": "^2.15.1",
     "react-toastify": "^10.0.5",
     "react-zxing": "^2.0.0",

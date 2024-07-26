@@ -111,6 +111,7 @@ class StockAlertView(APIView):
     def post(self, request):
         try:
             product_ids = request.data['product_ids']
+            print(product_ids)
             product_ids = json.loads(product_ids)
         except KeyError:
             return Response({"error": "Field product_ids is required"}, status=status.HTTP_400_BAD_REQUEST)
