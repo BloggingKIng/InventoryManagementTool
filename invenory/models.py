@@ -28,6 +28,11 @@ class Order(models.Model):
         if not self.orderId:
             order_count = Order.objects.count()
             order_id = f"#OD{order_count+1}" if order_count+1 > 10 else f"#OD0{order_count+1}"
+            print(order_id)
+            print(Order.objects.filter(orderId=order_id).exists())
+            while Order.objects.filter(orderId=order_id).exists():
+                order_count += 1
+                order_id = f"#OD{order_count+1}" if order_count+1 > 10 else f"#OD0{order_count+1}"
             self.orderId = order_id
         return super(Order, self).save(*args, **kwargs)
 

@@ -8,6 +8,7 @@ from rest_framework.decorators import permission_classes
 from .permissions import InventoryPermission, OrderPermission
 from rest_framework import status
 from rest_framework.decorators import api_view
+from authentication.models import User
 import json
 # Create your views here.
 
@@ -75,6 +76,12 @@ class OrderView(APIView):
             order_item.save()
             product.quantity -= quantity
             product.save()
+            stock_alerts = StockAlert.objects.filter(product=product)
+            for alerts in stock_alerts:
+                if product.quantity <= alerts.threshold:
+                    for users in User.objects.filter(userType__in=['admin', 'manager', 'Admin','Manager']):
+                        alert = Alert.objects.create(user=users, content=f"Stock for {product.productName} ({product.barcode}) is below threshold. Current stock: {product.quantity}. Threshold: {alerts.threshold}")
+                        alert.save()
             order_items.append(order_item)
         
         order = Order.objects.create(customerName=customer_name, customerPhone=customer_phone)
@@ -169,8 +176,9 @@ class DisplayAlerts(APIView):
         # Its just for marking the alerts as seen
         id = request.data['id']
         alert = Alert.objects.filter(id=id).first()
+        seen = request.data['seen']
         if not alert:
             return Response({"error": "Alert not found"}, status=status.HTTP_404_NOT_FOUND)
-        alert.seen = True
+        alert.seen = seen
         alert.save()
         return Response(status=status.HTTP_200_OK)

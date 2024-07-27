@@ -89,3 +89,23 @@
     border-bottom-left-radius: 10px !important;
     border-bottom-right-radius: 10px !important;
 }  
+
+.dropdown-item {
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    color: black !important;
+    align-items: center;
+    cursor: pointer;
+}
+
+.icon-container {
+    width: fit-content;
+    margin: 10px;
+}
+
+.no-notifications, .no-notifications:hover {
+    background-color: #f8f9fa;
+    color: black;
+    font-weight: 500;
+}

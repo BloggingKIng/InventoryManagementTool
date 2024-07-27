@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {Container, Navbar, Nav, Dropdown} from 'react-bootstrap';
 import './navbar.css';
 import { useUserContext } from '../Context/UserContextProvider';
@@ -6,8 +6,29 @@ import {toast, ToastContainer} from 'react-toastify';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+const ReadEnvelope = () => {
+    return (
+        <Container  className='icon-container'>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-envelope" viewBox="0 0 16 16">
+                <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1zm13 2.383-4.708 2.825L15 11.105zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741M1 11.105l4.708-2.897L1 5.383z"/>
+            </svg>
+        </Container>
+    )
+}
+
+const UnReadEnvelope = () => {
+    return (
+        <Container  className='icon-container'>
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-envelope-open" viewBox="0 0 16 16">
+                <path d="M8.47 1.318a1 1 0 0 0-.94 0l-6 3.2A1 1 0 0 0 1 5.4v.817l5.75 3.45L8 8.917l1.25.75L15 6.217V5.4a1 1 0 0 0-.53-.882zM15 7.383l-4.778 2.867L15 13.117zm-.035 6.88L8 10.082l-6.965 4.18A1 1 0 0 0 2 15h12a1 1 0 0 0 .965-.738ZM1 13.116l4.778-2.867L1 7.383v5.734ZM7.059.435a2 2 0 0 1 1.882 0l6 3.2A2 2 0 0 1 16 5.4V14a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V5.4a2 2 0 0 1 1.059-1.765z"/>
+            </svg>
+        </Container>
+    )
+}
+
 export default function NavigationBar({active='inventory'}) {
     const {user, loggedIn, token, setLoggedIn, setToken, setUser} = useUserContext();
+    const [alerts, setAlerts] = useState([]);
     const navigate = useNavigate();
     const handleLogout = async() => {
         await axios.post('http://127.0.0.1:8000/auth/token/logout',null, {
@@ -31,6 +52,28 @@ export default function NavigationBar({active='inventory'}) {
     const isAuthorizedUser = () => {
         return user?.userType?.toLowerCase() === 'admin' || user?.userType?.toLowerCase() === 'manager';
     }
+
+    const fetchAlerts = () => {
+        axios.get('http://127.0.0.1:8000/api/user/alerts/', {
+            headers: {
+                Authorization: `Token ${token}`
+            }
+        })
+        .then((response)=> {
+            setAlerts(response.data);
+        })
+        .catch((error)=> {
+            console.log(error);
+        })
+    }
+
+    useEffect(() => {
+        if (token) {
+            fetchAlerts();
+        }
+    }, [token])
+
+
     return (
         <div className='navbar-container'>
             <Navbar expand="lg" bg='warning'>
@@ -61,9 +104,25 @@ export default function NavigationBar({active='inventory'}) {
                                     </svg>
                                     </Dropdown.Toggle>
                                     <Dropdown.Menu className='notifications-container'>
-                                        <Dropdown.Item>Stock of Item X has fallen below the limit. Take a look at the stock!</Dropdown.Item>
-                                        <Dropdown.Item>Another action</Dropdown.Item>
-                                        <Dropdown.Item>Something else</Dropdown.Item>
+                                        {
+                                            alerts.length > 0 ?
+                                                alerts.map((alert)=> {
+                                                    return (
+                                                        <Dropdown.Item as={'div'}>
+                                                            {alert.seen ? <ReadEnvelope /> : <UnReadEnvelope />}
+                                                            <span>
+                                                                {alert.content}
+                                                            </span>
+                                                        </Dropdown.Item>
+                                                    )
+                                                })
+                                                :
+                                            <Dropdown.Item as={'div'} className='no-notifications'>
+                                                <span>
+                                                    No new alerts
+                                                </span>
+                                            </Dropdown.Item>
+                                        }
                                     </Dropdown.Menu>
                                 </Dropdown>
                             </Nav.Item>
