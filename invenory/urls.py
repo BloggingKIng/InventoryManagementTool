@@ -8,4 +8,5 @@ urlpatterns  = [
     path('order/<str:orderId>/',views.get_order_details),
     path('stock-alert/',views.StockAlertView.as_view()),
     path('user/alerts/',views.DisplayAlerts.as_view()),
+    path('sales/',views.get_stats),
 ]

@@ -21,3 +21,8 @@ class OrderPermission(permissions.BasePermission):
         
         if request.method in ['PUT', 'DELETE']:
             return request.user.userType == 'Manager' or request.user.userType == 'Admin' or request.user.is_superuser
+        
+
+class StatsPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        return request.user.userType == 'Manager' or request.user.userType == 'Admin' or request.user.is_superuser

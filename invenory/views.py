@@ -5,10 +5,12 @@ from rest_framework.views import APIView
 from .models import Inventory, Order, OrderItem, StockAlert, Alert
 from .serializers import InventorySerializer, OrderSerializer, StockAlertSerializer, AlertSerializer
 from rest_framework.decorators import permission_classes
-from .permissions import InventoryPermission, OrderPermission
+from .permissions import InventoryPermission, OrderPermission, StatsPermission
 from rest_framework import status
 from rest_framework.decorators import api_view
 from authentication.models import User
+from datetime import datetime, timedelta
+from django.utils import timezone
 import json
 # Create your views here.
 
@@ -190,3 +192,77 @@ class DisplayAlerts(APIView):
             return Response({"error": "Alert not found"}, status=status.HTTP_404_NOT_FOUND)
         alert.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+@api_view(['GET'])
+@permission_classes([StatsPermission])
+def get_stats(request):
+    now = timezone.now()
+    seven_days_ago = now - timedelta(days=7)
+    thirty_days_ago = now - timedelta(days=30)
+    one_day_ago = now - timedelta(days=1)
+
+    products = Inventory.objects.all()
+
+    sales_data = {}
+
+    for product in products:
+        product_id = product.id
+        sales_data[product_id] = {
+            'name': product.productName,
+            'barcode': product.barcode,
+            'price': product.price,
+            'sale_quantity': 0,
+            'sales_today': 0,
+            'sale_quantity_in_7_days': 0,
+            'sale_quantity_in_30_days': 0,
+            'sale_value': 0,
+            'sale_value_today': 0,
+            'sale_value_in_7_days': 0,
+            'sale_value_in_30_days': 0
+        }
+
+    orders = Order.objects.filter(products__product__in=products).select_related('products__product')
+    for order in orders:
+        order_date = order.orderDate
+        for item in order.products.all():
+            product = item.product
+            product_id = product.id
+            quantity = item.quantity
+            price = product.price
+
+            sales_data[product_id]['sale_quantity'] += quantity
+            sales_data[product_id]['sale_value'] += quantity * price
+
+            if order_date >= one_day_ago:
+                sales_data[product_id]['sales_today'] += quantity
+                sales_data[product_id]['sale_value_today'] += quantity * price
+
+            if order_date >= seven_days_ago:
+                sales_data[product_id]['sale_quantity_in_7_days'] += quantity
+                sales_data[product_id]['sale_value_in_7_days'] += quantity * price
+
+            if order_date >= thirty_days_ago:
+                sales_data[product_id]['sale_quantity_in_30_days'] += quantity
+                sales_data[product_id]['sale_value_in_30_days'] += quantity * price
+
+    sales_today = sum(data['sales_today'] for data in sales_data.values())
+    sales_in_7_days = sum(data['sale_quantity_in_7_days'] for data in sales_data.values())
+    sales_in_30_days = sum(data['sale_quantity_in_30_days'] for data in sales_data.values())
+    sales_in_all_time = sum(data['sale_quantity'] for data in sales_data.values())
+    sales_value_today = sum(data['sale_value_today'] for data in sales_data.values())
+    value_in_7_days = sum(data['sale_value_in_7_days'] for data in sales_data.values())
+    value_in_30_days = sum(data['sale_value_in_30_days'] for data in sales_data.values())
+    value_in_all_time = sum(data['sale_value'] for data in sales_data.values())
+
+    data = {
+        'sales_today': sales_today,
+        'sales_in_7_days': sales_in_7_days,
+        'sales_in_30_days': sales_in_30_days,
+        'sales_in_all_time': sales_in_all_time,
+        'sales_value_today': sales_value_today,
+        'value_in_7_days': value_in_7_days,
+        'value_in_30_days': value_in_30_days,
+        'value_in_all_time': value_in_all_time,
+        'product_data': list(sales_data.values())
+    }
+
+    return Response(data, status=status.HTTP_200_OK)
