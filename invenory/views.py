@@ -182,3 +182,11 @@ class DisplayAlerts(APIView):
         alert.seen = seen
         alert.save()
         return Response(status=status.HTTP_200_OK)
+    
+    def delete(self, request):
+        id = request.data['id']
+        alert = Alert.objects.filter(id=id).first()
+        if not alert:
+            return Response({"error": "Alert not found"}, status=status.HTTP_404_NOT_FOUND)
+        alert.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
