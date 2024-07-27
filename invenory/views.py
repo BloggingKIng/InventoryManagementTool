@@ -157,3 +157,20 @@ class StockAlertView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class DisplayAlerts(APIView):
+    def get(self, request):
+        user = request.user
+        alerts = Alert.objects.filter(user=user)
+        serializer = AlertSerializer(alerts, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request):
+        # Its just for marking the alerts as seen
+        id = request.data['id']
+        alert = Alert.objects.filter(id=id).first()
+        if not alert:
+            return Response({"error": "Alert not found"}, status=status.HTTP_404_NOT_FOUND)
+        alert.seen = True
+        alert.save()
+        return Response(status=status.HTTP_200_OK)
