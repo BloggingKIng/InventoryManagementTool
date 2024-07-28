@@ -1,5 +1,8 @@
 .overall-stats {
     display: flex;
+    border: 3px solid black;
+    border-radius: 25px;
+    padding: 0;
 }
 
 .overall-stats > .container {
@@ -7,14 +10,14 @@
 }
 
 .overall-stats {
-    margin-top: 20px;
+    margin-top: 30px;
 }
 
 .icon {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 33%;
+    width: 25%;
     color: rgb(73, 120, 1);
     border-top-left-radius: 20px;
     border-bottom-left-radius: 20px ;
@@ -28,15 +31,44 @@
     text-align: center;
     border-top-right-radius: 20px;
     border-bottom-right-radius: 20px;
-    background-color: #fffdfd;
+    background-color: #dadada;
     border-left: 2.5px solid black !important;
+    flex-direction: column;
 }
 
 .stat-heading {
-    font-size: 30px;
-    font-weight: 500;
+    font-size: 25px;
+    font-weight: 700;
 }
 
 .stat-value {
-    font-size: 25px;
+    font-size: 22px;
+}
+
+.stat {
+    border-right: 2px solid black;
+    padding: 15px;
+    padding-right: 30px;
+    padding-left: 30px;
+}
+
+.stat:last-child {
+    border: 0px solid black;
+}
+
+.stats-timerange {
+    margin: 30px 0;
+    width: 20%;
+    float: right;
+}
+
+.stats-container {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+
+.heading {
+    margin-top: -30px;
+    margin-bottom: 20px;
 }

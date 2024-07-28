@@ -267,6 +267,7 @@ def get_stats(request):
         'totalOrders': len(Order.objects.all()),
         'orders_in_7_days': len(Order.objects.filter(orderDate__gte=timezone.now() - timedelta(days=7))),
         'orders_in_30_days': len(Order.objects.filter(orderDate__gte=timezone.now() - timedelta(days=30))),
+        'orders_today': len(Order.objects.filter(orderDate__gte=timezone.now() - timedelta(days=1))),
         'product_data': products_data
     }
 

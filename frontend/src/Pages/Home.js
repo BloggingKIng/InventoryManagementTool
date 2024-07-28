@@ -1,16 +1,21 @@
 import NavigationBar from "../Components/Navbar";
 import DisplayUser from "../Components/DisplayUser";
-import { Container } from "react-bootstrap";
+import { Container, Dropdown } from "react-bootstrap";
 import { useUserContext } from "../Context/UserContextProvider";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import './assets/home.css';
 import axios from "axios";
 import { toast } from "react-toastify";
+import Select from 'react-select';
+
 export default function Home() {{
     const {loggedIn, token, user} = useUserContext();
+
     const [stats, setStats] = useState({});
+    const [statsTimeRange, setStatsTimeRange] = useState( {value: 'today', label: 'Today'});
     const navigate = useNavigate();
+
     const userIsAuthorized = () => {
         return user?.userType?.toLowerCase() === 'admin' ||  user?.userType?.toLowerCase() === 'manager';
     }
@@ -47,6 +52,21 @@ export default function Home() {{
                     (
                         <Container>
                             <h2 className="heading">Statistics</h2>
+                            <Container className="stats-timerange">
+                                <Select 
+                                    options={
+                                        [
+                                            {label: 'Today', value: 'today'},
+                                            {label: 'This Week', value: 'week'},
+                                            {label: 'This Month', value: 'month'},
+                                            {label: 'All Time', value: 'all'}
+                                        ]
+                                    }
+                                    defaultValue={{value: 'today', label: 'Today'}}
+                                    value={statsTimeRange}
+                                    onChange={(e) => setStatsTimeRange(e)}
+                                />
+                            </Container>
                             <Container className="overall-stats">
                                 <Container className="icon">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="currentColor" class="bi bi-graph-up" viewBox="0 0 16 16">
@@ -54,23 +74,46 @@ export default function Home() {{
                                     </svg>
                                 </Container>
                                 <Container className="stats">
-                                    <Container className="stat">
-                                        <h3 className="stat-heading">Total Products Sold</h3>
-                                        <p className="stat-value">
-                                            {stats.sales_in_all_time} <strong>units</strong>
-                                        </p>
+                                    <Container>
+                                        <h2 className="heading">{statsTimeRange.label} Sales Report</h2>
                                     </Container>
-                                    <Container className="stat">
-                                        <h3 className="stat-heading">Total Orders</h3>
-                                        <p className="stat-value">
-                                            {stats.totalOrders} <strong>orders</strong>
-                                        </p>
-                                    </Container>
-                                    <Container className="stat">
-                                        <h3 className="stat-heading">Total Revenue</h3>
-                                        <p className="stat-value">
-                                            <strong>PKR. </strong>{stats.value_in_all_time}
-                                        </p>
+                                    <Container className="stats-container">
+                                        <Container className="stat">
+                                            <h3 className="stat-heading">Total Products Sold</h3>
+                                            <p className="stat-value">
+                                                {
+                                                    statsTimeRange.value === 'today' ?
+                                                    (stats.sales_today? stats.sales_today:0) : statsTimeRange.value === 'week' ?
+                                                    (stats.sales_in_7_days? stats.sales_in_7_days:0) : statsTimeRange.value === 'month' ?
+                                                    (stats.sales_in_30_days? stats.sales_in_30_days:0) : (stats.sales_in_all_time? stats.sales_in_all_time:0)
+                                                }
+                                                <strong> units</strong>
+                                            </p>
+                                        </Container>
+                                        <Container className="stat">
+                                            <h3 className="stat-heading">Total Orders</h3>
+                                            <p className="stat-value">
+                                                {
+                                                    statsTimeRange.value === 'today' ?
+                                                    (stats.orders_today? stats.orders_today:0) : statsTimeRange.value === 'week' ?
+                                                    (stats.orders_in_7_days? stats.orders_in_7_days:0) : statsTimeRange.value === 'month' ?
+                                                    (stats.orders_in_30_days? stats.orders_in_30_days:0) : (stats.totalOrders)
+                                                } 
+                                                <strong> orders</strong>
+                                            </p>
+                                        </Container>
+                                        <Container className="stat">
+                                            <h3 className="stat-heading">Sales Value (in PKR)</h3>
+                                            <p className="stat-value">
+                                                <strong>PKR. </strong>
+                                                {
+                                                    statsTimeRange.value === 'today' ?
+                                                    (stats.sales_value_today? stats.sales_value_today:0) : statsTimeRange.value === 'week' ?
+                                                    (stats.value_in_7_days? stats.value_in_7_days:0) : statsTimeRange.value === 'month' ?
+                                                    (stats.value_in_30_days? stats.value_in_30_days:0) : (stats.value_in_all_time? stats.value_in_all_time:0)
+                                                }
+                                            </p>
+                                        </Container>
                                     </Container>
                                 </Container>
                             </Container>
