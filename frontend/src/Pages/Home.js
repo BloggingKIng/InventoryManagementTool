@@ -1,6 +1,6 @@
 import NavigationBar from "../Components/Navbar";
 import DisplayUser from "../Components/DisplayUser";
-import { Container, Table } from "react-bootstrap";
+import { Container, Table, Form, Button } from "react-bootstrap";
 import { useUserContext } from "../Context/UserContextProvider";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -9,11 +9,12 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import Select from 'react-select';
 
-export default function Home() {{
+export default function Home() {
     const {loggedIn, token, user} = useUserContext();
 
     const [stats, setStats] = useState({});
-    const [statsTimeRange, setStatsTimeRange] = useState( {value: 'today', label: 'Today'});
+    const [statsTimeRange, setStatsTimeRange] = useState({value: 'today', label: 'Today'});
+    const [searchQuery, setSearchQuery] = useState("");
     const navigate = useNavigate();
 
     const userIsAuthorized = () => {
@@ -41,6 +42,11 @@ export default function Home() {{
         }
     }, [token])
 
+    const filteredProducts = stats.product_data?.filter(product =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+        product.barcode.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return (
         <Container className="page-container">
             <NavigationBar active='home' />
@@ -51,7 +57,7 @@ export default function Home() {{
                 userIsAuthorized() && 
                     (
                         <Container>
-                            <h2 className="heading">Statistics</h2>
+                            <h2 className="top-heading heading">Statistics</h2>
                             <Container className="stats-timerange">
                                 <Select 
                                     options={
@@ -74,7 +80,7 @@ export default function Home() {{
                                     </svg>
                                 </Container>
                                 <Container className="stats">
-                                    <Container>
+                                    <Container className="heading-container">
                                         <h2 className="stats-heading">{statsTimeRange.label} Sales Report</h2>
                                     </Container>
                                     <Container className="stats-container">
@@ -83,9 +89,9 @@ export default function Home() {{
                                             <p className="stat-value">
                                                 {
                                                     statsTimeRange.value === 'today' ?
-                                                    (stats.sales_today? stats.sales_today:0) : statsTimeRange.value === 'week' ?
-                                                    (stats.sales_in_7_days? stats.sales_in_7_days:0) : statsTimeRange.value === 'month' ?
-                                                    (stats.sales_in_30_days? stats.sales_in_30_days:0) : (stats.sales_in_all_time? stats.sales_in_all_time:0)
+                                                    (stats.sales_today ? stats.sales_today : 0) : statsTimeRange.value === 'week' ?
+                                                    (stats.sales_in_7_days ? stats.sales_in_7_days : 0) : statsTimeRange.value === 'month' ?
+                                                    (stats.sales_in_30_days ? stats.sales_in_30_days : 0) : (stats.sales_in_all_time ? stats.sales_in_all_time : 0)
                                                 }
                                                 <strong> units</strong>
                                             </p>
@@ -95,9 +101,9 @@ export default function Home() {{
                                             <p className="stat-value">
                                                 {
                                                     statsTimeRange.value === 'today' ?
-                                                    (stats.orders_today? stats.orders_today:0) : statsTimeRange.value === 'week' ?
-                                                    (stats.orders_in_7_days? stats.orders_in_7_days:0) : statsTimeRange.value === 'month' ?
-                                                    (stats.orders_in_30_days? stats.orders_in_30_days:0) : (stats.totalOrders)
+                                                    (stats.orders_today ? stats.orders_today : 0) : statsTimeRange.value === 'week' ?
+                                                    (stats.orders_in_7_days ? stats.orders_in_7_days : 0) : statsTimeRange.value === 'month' ?
+                                                    (stats.orders_in_30_days ? stats.orders_in_30_days : 0) : (stats.totalOrders)
                                                 } 
                                                 <strong> orders</strong>
                                             </p>
@@ -108,9 +114,9 @@ export default function Home() {{
                                                 <strong>PKR. </strong>
                                                 {
                                                     statsTimeRange.value === 'today' ?
-                                                    (stats.sales_value_today? stats.sales_value_today:0) : statsTimeRange.value === 'week' ?
-                                                    (stats.value_in_7_days? stats.value_in_7_days:0) : statsTimeRange.value === 'month' ?
-                                                    (stats.value_in_30_days? stats.value_in_30_days:0) : (stats.value_in_all_time? stats.value_in_all_time:0)
+                                                    (stats.sales_value_today ? stats.sales_value_today : 0) : statsTimeRange.value === 'week' ?
+                                                    (stats.value_in_7_days ? stats.value_in_7_days : 0) : statsTimeRange.value === 'month' ?
+                                                    (stats.value_in_30_days ? stats.value_in_30_days : 0) : (stats.value_in_all_time ? stats.value_in_all_time : 0)
                                                 }
                                             </p>
                                         </Container>
@@ -122,8 +128,18 @@ export default function Home() {{
             }
             {
                 userIsAuthorized() &&
-                    <Container className="stats-table-contaienr">
-                        <h3 className="heading table-container-heading">Product Sales Breakdown ({statsTimeRange.label})</h3>
+                    <Container className="stats-table-container">
+                        <h3 className="heading table-container-heading top-heading">Product Sales Breakdown ({statsTimeRange.label})</h3>
+                        <Container className="search-bar-container">
+                            <Form.Control 
+                                type="text" 
+                                placeholder="Search by product name or barcode" 
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="mb-3 search-bar"
+                            />
+                            <Button variant="secondary" className="reset-btn" onClick={()=>setSearchQuery('')}>Reset</Button>
+                        </Container>
                         <Table striped bordered hover className="stats-table">
                             <thead>
                                 <tr>
@@ -136,7 +152,7 @@ export default function Home() {{
                             </thead>
                             <tbody>
                                 {
-                                    stats.product_data?.map((product, index) => {
+                                    filteredProducts?.map((product, index) => {
                                         return (
                                             <tr key={index}>
                                                 <td>{index + 1}</td>
@@ -176,6 +192,6 @@ export default function Home() {{
             }
         </Container>
     )
-}}
+}
 
 //I dont have any more idea about this page lol. Will complpete its design later :>
