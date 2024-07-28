@@ -68,7 +68,44 @@
     margin-top: 20px;
 }
 
-.heading {
+.stats-heading {
     margin-top: -30px;
     margin-bottom: 20px;
+}
+
+.stats-table thead, .stats-table thead th, .stats-table thead tr {
+    border: 0px solid black !important;
+}
+
+.table-container-heading {
+    margin-top: 50px;
+    margin-bottom: 50px;
+}
+
+.stats-table td{
+    padding: 25px;
+    border: 1px solid black;
+}
+
+.stats-table thead th {
+    padding: 30px;
+    /* border: 2px solid black !important; */
+    background-color: #f1c40f;
+}
+
+.stats-table th:first-of-type {
+    border-top-left-radius: 20px;
+}
+
+.stats-table th:last-of-type {
+    border-top-right-radius: 20px;
+    border-top: 1px solid;
+}
+
+.stats-table tr:nth-child(even) td{
+    background-color: #f1c40f;
+}
+
+.stats-table tr:nth-child(odd) td{
+    background-color: #dadada;
 }

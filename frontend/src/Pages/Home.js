@@ -1,6 +1,6 @@
 import NavigationBar from "../Components/Navbar";
 import DisplayUser from "../Components/DisplayUser";
-import { Container, Dropdown } from "react-bootstrap";
+import { Container, Table } from "react-bootstrap";
 import { useUserContext } from "../Context/UserContextProvider";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
@@ -75,7 +75,7 @@ export default function Home() {{
                                 </Container>
                                 <Container className="stats">
                                     <Container>
-                                        <h2 className="heading">{statsTimeRange.label} Sales Report</h2>
+                                        <h2 className="stats-heading">{statsTimeRange.label} Sales Report</h2>
                                     </Container>
                                     <Container className="stats-container">
                                         <Container className="stat">
@@ -119,6 +119,60 @@ export default function Home() {{
                             </Container>
                         </Container>
                     )
+            }
+            {
+                userIsAuthorized() &&
+                    <Container className="stats-table-contaienr">
+                        <h3 className="heading table-container-heading">Product Sales Breakdown ({statsTimeRange.label})</h3>
+                        <Table striped bordered hover className="stats-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Product Name</th>
+                                    <th>Unit Price (PKR)</th>
+                                    <th>Units Sold</th>
+                                    <th>Sales Value (PKR)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {
+                                    stats.product_data?.map((product, index) => {
+                                        return (
+                                            <tr key={index}>
+                                                <td>{index + 1}</td>
+                                                <td>
+                                                    {product.name}&nbsp;&nbsp;
+                                                    <strong>
+                                                        ({product.barcode})
+                                                    </strong>
+                                                </td>
+                                                <td>
+                                                    <strong>PKR. </strong>{product.price}
+                                                </td>
+                                                <td>
+                                                    {
+                                                        statsTimeRange.value === 'today' ?
+                                                        product.sales_today : statsTimeRange.value === 'week' ?
+                                                        product.sale_quantity_in_7_days : statsTimeRange.value === 'month' ?
+                                                        product.sale_quantity_in_30_days : product.sale_quantity
+                                                    }
+                                                </td>
+                                                <td>
+                                                    <strong>PKR. </strong>
+                                                    {
+                                                        statsTimeRange.value === 'today' ?
+                                                        product.sale_value_today : statsTimeRange.value === 'week' ?
+                                                        product.sale_value_in_7_days : statsTimeRange.value === 'month' ?
+                                                        product.sale_value_in_30_days : product.sale_value
+                                                    }
+                                                </td>
+                                            </tr>
+                                        )
+                                    })
+                                }
+                            </tbody>
+                        </Table>
+                    </Container>
             }
         </Container>
     )
