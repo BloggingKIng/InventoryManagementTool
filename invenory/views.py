@@ -192,66 +192,68 @@ class DisplayAlerts(APIView):
             return Response({"error": "Alert not found"}, status=status.HTTP_404_NOT_FOUND)
         alert.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+    
 @api_view(['GET'])
 @permission_classes([StatsPermission])
 def get_stats(request):
-    now = timezone.now()
-    seven_days_ago = now - timedelta(days=7)
-    thirty_days_ago = now - timedelta(days=30)
-    one_day_ago = now - timedelta(days=1)
-
     products = Inventory.objects.all()
-
-    sales_data = {}
-
+    # orders = Order.objects.all()
+    # we want to find the sales in last 7 days, last 30 days and all time sales 
+    # of the products
+    sales_in_7_days = 0
+    sales_in_30_days = 0
+    sales_in_all_time = 0
+    sales_today = 0
+    value_in_7_days = 0
+    value_in_30_days = 0
+    value_in_all_time = 0
+    sales_value_today = 0
+    products_data = []
     for product in products:
-        product_id = product.id
-        sales_data[product_id] = {
-            'name': product.productName,
-            'barcode': product.barcode,
-            'price': product.price,
-            'sale_quantity': 0,
-            'sales_today': 0,
-            'sale_quantity_in_7_days': 0,
-            'sale_quantity_in_30_days': 0,
-            'sale_value': 0,
-            'sale_value_today': 0,
-            'sale_value_in_7_days': 0,
-            'sale_value_in_30_days': 0
-        }
+        sales_data = {}
+        filtered_orders = Order.objects.filter(products__product=product)
+        sales_value = 0
+        sales = 0
+        todaySales =0
+        sales7days = 0
+        sales30days = 0
+        value7days = 0
+        value30days = 0
+        todaySalesValue = 0
+        sevenDaysAgo = timezone.now() - timedelta(days=7)
+        thirtyDaysAgo = timezone.now() - timedelta(days=30)
+        oneDayAgo = timezone.now() - timedelta(days=1)
+        for order in filtered_orders:
+            sales += order.products.filter(product=product).first().quantity
+            todaySales += order.products.filter(product=product).first().quantity if order.orderDate >= oneDayAgo else 0
+            sales7days += order.products.filter(product=product).first().quantity if order.orderDate >= sevenDaysAgo else 0
+            sales30days += order.products.filter(product=product).first().quantity if order.orderDate >= thirtyDaysAgo else 0
+            sales_value = sales * product.price
+            value7days = sales7days * product.price
+            value30days = sales30days * product.price    
+            todaySalesValue = todaySales * product.price    
 
-    orders = Order.objects.filter(products__product__in=products).select_related('products__product')
-    for order in orders:
-        order_date = order.orderDate
-        for item in order.products.all():
-            product = item.product
-            product_id = product.id
-            quantity = item.quantity
-            price = product.price
-
-            sales_data[product_id]['sale_quantity'] += quantity
-            sales_data[product_id]['sale_value'] += quantity * price
-
-            if order_date >= one_day_ago:
-                sales_data[product_id]['sales_today'] += quantity
-                sales_data[product_id]['sale_value_today'] += quantity * price
-
-            if order_date >= seven_days_ago:
-                sales_data[product_id]['sale_quantity_in_7_days'] += quantity
-                sales_data[product_id]['sale_value_in_7_days'] += quantity * price
-
-            if order_date >= thirty_days_ago:
-                sales_data[product_id]['sale_quantity_in_30_days'] += quantity
-                sales_data[product_id]['sale_value_in_30_days'] += quantity * price
-
-    sales_today = sum(data['sales_today'] for data in sales_data.values())
-    sales_in_7_days = sum(data['sale_quantity_in_7_days'] for data in sales_data.values())
-    sales_in_30_days = sum(data['sale_quantity_in_30_days'] for data in sales_data.values())
-    sales_in_all_time = sum(data['sale_quantity'] for data in sales_data.values())
-    sales_value_today = sum(data['sale_value_today'] for data in sales_data.values())
-    value_in_7_days = sum(data['sale_value_in_7_days'] for data in sales_data.values())
-    value_in_30_days = sum(data['sale_value_in_30_days'] for data in sales_data.values())
-    value_in_all_time = sum(data['sale_value'] for data in sales_data.values())
+        sales_in_all_time += sales
+        value_in_all_time += sales_value
+        sales_in_7_days += sales7days
+        sales_in_30_days += sales30days
+        value_in_7_days += value7days
+        value_in_30_days += value30days
+        sales_value_today += todaySalesValue
+        sales_today += todaySales
+        products_data.append(sales_data)
+    
+        sales_data['name'] = product.productName
+        sales_data['barcode'] = product.barcode
+        sales_data['price'] = product.price
+        sales_data['sale_quantity'] = sales
+        sales_data['sales_today'] = todaySales
+        sales_data['sale_quantity_in_7_days'] = sales7days
+        sales_data['sale_quantity_in_30_days'] = sales30days
+        sales_data['sale_value'] = sales_value
+        sales_data['sale_value_today'] = todaySalesValue
+        sales_data['sale_value_in_7_days'] = value7days
+        sales_data['sale_value_in_30_days'] = value30days
 
     data = {
         'sales_today': sales_today,
@@ -262,7 +264,11 @@ def get_stats(request):
         'value_in_7_days': value_in_7_days,
         'value_in_30_days': value_in_30_days,
         'value_in_all_time': value_in_all_time,
-        'product_data': list(sales_data.values())
+        'totalOrders': len(Order.objects.all()),
+        'orders_in_7_days': len(Order.objects.filter(orderDate__gte=timezone.now() - timedelta(days=7))),
+        'orders_in_30_days': len(Order.objects.filter(orderDate__gte=timezone.now() - timedelta(days=30))),
+        'product_data': products_data
     }
 
     return Response(data, status=status.HTTP_200_OK)
+        

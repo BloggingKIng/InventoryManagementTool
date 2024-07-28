@@ -1,0 +1,42 @@
+.overall-stats {
+    display: flex;
+}
+
+.overall-stats > .container {
+    border: 3px solid black;
+}
+
+.overall-stats {
+    margin-top: 20px;
+}
+
+.icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 33%;
+    color: rgb(73, 120, 1);
+    border-top-left-radius: 20px;
+    border-bottom-left-radius: 20px ;
+    background-color: #f1c40f;
+    border-right: 2..5px solid black !important;
+}
+
+.stats {
+    display: flex;
+    padding: 80px 10px;
+    text-align: center;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    background-color: #fffdfd;
+    border-left: 2.5px solid black !important;
+}
+
+.stat-heading {
+    font-size: 30px;
+    font-weight: 500;
+}
+
+.stat-value {
+    font-size: 25px;
+}
